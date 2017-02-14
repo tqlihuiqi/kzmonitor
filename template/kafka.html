@@ -1,0 +1,241 @@
+<div class="row" style="padding-top:20px;">
+    <div class="col-sm-4">
+        <div id="kafkaTree"></div>
+    </div>
+    <div class="col-sm-8">
+        <div class="row"> 
+            <div id="kafkaPage" class="col-md-12" style="padding-bottom:20px;">
+                <div id="kafkaRealtime" style="padding-bottom:20px;"></div>
+                <div id="topicList" class="panel panel-default">
+                    <h4 style="text-align: center">Topic 数据增量排名</h4>
+                    <div class="panel-body">
+                        <table id="topicListTable" class="table table-striped"></table>
+                    </div>
+                </div>
+                <div id="groupList">
+                    <div class="panel panel-default">
+                        <h4 style="text-align: center">Consumer Group 实时延迟排名</h4>
+                        <div class="panel-body">
+                            <table id="groupListTable" class="table table-striped"></table>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <button id="kafkaTopicDaterange" class="btn btn-xs btn-primary pull-right">选择时间</button>
+                    </div>
+                    <div class="panel panel-default">
+                        <div id="logsize"></div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div id="logsizeDelta"></div>
+                    </div>
+                </div>
+                <div id="kafkaChartList">
+                    <div class="panel-body">
+                        <button id="kafkaGroupDaterange" class="btn btn-xs btn-primary pull-right">选择时间</button>
+                    </div>
+                    <div class="panel panel-default">
+                        <div id="offsets"></div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div id="offsetsDelta"></div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div id="lag"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $("#kafkaRealtime").hide();
+    $("#topicList").hide();
+    $("#groupList").hide();
+    $("#kafkaChartList").hide();
+
+    // 加载jstree导航
+    $.ajax({
+        url: "/kafka",
+        type: "POST",
+        data: {
+            "method": "jstree",
+        },
+        dataType: "json",
+        success: function (event) {
+            $("#kafkaTree").jstree({
+                "core": {
+                    "data": event.data
+                }
+            })
+        },
+        error: function(jqXHR, stat, err_msg) {
+            alert("Error found: " + err_msg);
+        }
+    });
+
+    function realtime(cluster, topic, group) {
+        // 获取实时数据
+
+        $.ajax({
+            url: "/kafka",
+            type: "POST",
+            data: {
+                "method": "realtime",
+                "cluster": cluster,
+                "topic": topic,
+                "group": group
+            },
+            dataType: "json",
+            success: function (event) {
+                $("#kafkaRealtime").show();
+                $("#kafkaRealtime").html(event.realtime);
+            },
+            error: function(jqXHR, stat, err_msg) {
+                alert("Error found: " + err_msg);
+            }
+        });
+    };
+
+    function kafkaChart(datepicker, cluster, topic, group) {
+
+        $(function () {
+            var start = moment().subtract(30, "m").startOf("s");
+            var end = moment().startOf("s");
+    
+            function timeRangeData(start, end) {
+                $("#logsize").html(loading);
+                $("#logsizeDelta").html(loading);
+                $("#offsets").html(loading);
+                $("#offsetsDelta").html(loading);
+                $("#lag").html(loading);
+
+                $.ajax({
+                    url: "/kafka",
+                    type: "POST",
+                    data: {
+                        "method": "chartList",
+                        "cluster": cluster,
+                        "topic": topic,
+                        "group": group,
+                        "start": start.format("YYYY-MM-DD HH:mm:ss"),
+                        "end": end.format("YYYY-MM-DD HH:mm:ss")
+                    },
+                    dataType: "json",
+                    success: function (event) {
+                        makeChart("logsize", "Logsize", event.logsize);
+                        makeChart("logsizeDelta", "Logsize 增量", event.logsizeDelta);
+                        makeChart("offsets", "Offsets", event.offsets);
+                        makeChart("offsetsDelta", "Offsets 增量", event.offsetsDelta);
+                        makeChart("lag", "Lag", event.lag);
+                    },
+                    error: function(jqXHR, stat, err_msg) {
+                        alert("Error found: " + err_msg);
+                    }
+                });
+            };
+
+            timeRangeData(start, end);
+
+            // 时间范围选择器
+            daterange(datepicker, timeRangeData);
+
+        });
+    }
+
+    function kafkaClusterStat(cluster) {
+        // 获取集群模式下TopicLogsiz排名
+
+        $("#topicList").show();
+        $("#groupList").hide();
+        $("#kafkaChartList").hide();
+
+        // 获取实时数据
+        realtime(cluster);
+
+        var table = $("#topicListTable").DataTable({
+            "autoWidth": false,
+            "aaSorting": [1, "desc"],
+            "destroy": true,
+            "aLengthMenu": [10, 20, 30, 50, 100],  
+            "iDisplayLength": 20,
+            "ajax": {
+                url: "/kafka",
+                type: "POST",
+                data: {
+                    "method": "topicList",
+                    "cluster": cluster
+                },
+                cache: false,
+                dataType: "json",
+            },
+            "columns": [
+                {
+                    title: "Topic 名称",
+                    data: "topic"
+                },
+                {
+                    title: "Logsize 增量",
+                    data: "logsize"
+                }
+            ]
+        });
+    };
+
+    function kafkaTopicStat(cluster, topic) {
+        // Topic模式下ConsumerGroup延迟排名
+
+        $("#topicList").hide();
+        $("#groupList").show();
+        $("#kafkaChartList").hide();
+
+        // 获取实时数据
+        realtime(cluster, topic);
+
+        // 获取topic Logsize图表
+        kafkaChart("kafkaTopicDaterange", cluster, topic)
+
+        var table = $("#groupListTable").DataTable({
+            "autoWidth": false,
+            "aaSorting": [1, "desc"],
+            "destroy": true,
+            "aLengthMenu": [10, 20, 30, 50, 100],  
+            "iDisplayLength": 20,
+            "ajax": {
+                url: "/kafka",
+                type: "POST",
+                data: {
+                    "method": "groupList",
+                    "cluster": cluster,
+                    "topic": topic
+                },
+                cache: false,
+                dataType: "json",
+            },
+            "columns": [
+                {
+                    title: "Group 名称",
+                    data: "group"
+                },
+                {
+                    title: "Lag",
+                    data: "lag"
+                }
+            ]
+        });
+    };
+
+    function kafkaGroupStat(cluster, topic, group) {
+        // ConsumerGroup模式下Hightcharts数据
+
+        $("#topicList").hide();
+        $("#groupList").hide();
+        $("#kafkaChartList").show();
+
+        // 获取实时数据
+        realtime(cluster, topic, group);
+
+        // 获取group offsets与lag图表
+        kafkaChart("kafkaGroupDaterange", cluster, topic, group);
+    };
+
+</script>

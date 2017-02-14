@@ -1,0 +1,22 @@
+# Example
+
+# 集群名称:
+    # server:
+        # - broker1_ip:port
+        # - broker2_ip:port
+    # topic:
+        # topic1名称:
+            # - consumer_group1名称
+            # - consumer_group2名称
+        # topic2名称:
+            # - consumer_group1名称
+            # - consumer_group2名称
+
+# MyKafkaCluster:
+    # server:
+        # - 10.0.0.1:9092
+        # - 10.0.0.2:9092
+    # topic:
+        # MyTopic:
+            # - MyGroup1
+            # - MyGroup2

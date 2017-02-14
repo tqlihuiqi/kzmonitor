@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta charset="utf-8">
+        <title>KZ Monitor</title>
+        <meta name="generator" content="Bootply" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/static/css/styles.css" rel="stylesheet">
+        <link rel="stylesheet" href="/static/css/style.min.css"/>
+        <link rel="stylesheet" href="/static/css/daterangepicker-bs3.css">
+        <link rel="stylesheet" href="/static/css/dataTables.bootstrap.css">
+        <script src="/static/js/jquery.min.js"></script>
+        <script src="/static/js/bootstrap.min.js"></script>
+        <script src="/static/js/highcharts.js"></script>
+        <script src="/static/js/jstree.min.js"></script>
+        <script src="/static/js/moment.js"></script>
+        <script src="/static/js/daterangepicker.js"></script>
+        <script src="/static/js/jquery.dataTables.min.js"></script>
+        <script src="/static/js/dataTables.bootstrap.min.js"></script>
+        <script src="/static/js/base.js"></script>
+    </head>
+    <body>
+        <div id="top-nav" class="navbar navbar-inverse navbar-static-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="/"><b>KZ</b> Monitor</a>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="nav-tabs-custom">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#kafka" data-toggle="tab">kafka</a></li>
+                            <li><a href="#zookeeper" data-toggle="tab">zookeeper</a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="kafka">
+                                {% include 'kafka.html' %}
+                            </div>
+                            <div class="tab-pane" id="zookeeper">
+                                {% include 'zookeeper.html' %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
