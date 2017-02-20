@@ -217,13 +217,14 @@ class ZookeeperHandler(RequestHandler):
                     path = self.get_argument("path")
                     data, stat = yield client.get(path)
 
-                    if not data:
-                        data = None
-
-                    elif type(data) == str:
-                        data = data.encode("utf8").decode("utf8")
-
-                    elif type(data) == bytes:
-                        data = data.decode("utf8")
+                    try:
+                        if not data:
+                            data = None
+                        elif type(data) == str:
+                            data = data.encode("utf8").decode("utf8")
+                        elif type(data) == bytes:
+                            data = data.decode("utf8")
+                    except UnicodeDecodeError:
+                        data = "unrecognized data"
 
                     self.write(json.dumps({"data": data, "stat": stat}))

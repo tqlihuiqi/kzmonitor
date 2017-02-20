@@ -10,6 +10,7 @@ from tornado.web import Application, RequestHandler
 basedir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, basedir)
 
+from handler.api import ApiHandler
 from handler.index import IndexHandler
 from handler.kafka import KafkaHandler
 from handler.zookeeper import ZookeeperHandler
@@ -23,6 +24,7 @@ class KZMonitor(Application):
             (r'/', IndexHandler),
             (r'/kafka', KafkaHandler),
             (r'/zookeeper', ZookeeperHandler),
+            (r'/api/v1/(.+)', ApiHandler),
         ]
 
         settings = dict(
