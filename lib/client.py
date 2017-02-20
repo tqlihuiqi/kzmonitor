@@ -30,7 +30,18 @@ class SQLite3(object):
     def read(self, sql):
         """ 查询数据 """
 
-        cursor = self.db.execute(sql)
+        retry = 0
+
+        while retry <= 5:
+            try:
+                cursor = self.db.execute(sql)
+                break   
+            except Exception as e:
+                if "database is locked" in str(e):
+                    time.sleep(1)
+                
+                retry += 1
+
         data = cursor.fetchall()
         cursor.close()
         return data

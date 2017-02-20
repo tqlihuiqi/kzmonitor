@@ -8,7 +8,7 @@ from tornado.web import RequestHandler
 
 from lib.client import Kafka, SQLite3
 from lib.config import instance
-from lib.util import selectColumn, toTimestamp
+from lib.util import selectColumn, toTimestamp, md5Name
 
 class KafkaHandler(RequestHandler):
 
@@ -115,14 +115,14 @@ class KafkaHandler(RequestHandler):
             data = [dict(zip(meta, x)) for x in data]
 
             for metric in data:
-                for k, v in metric.iteritems():
+                for k, v in metric.items():
                     if k != "timestamp":
                         if not items.get(k):
                             items[k] = []
                         
                         items[k].append([ metric["timestamp"] * 1000, int(v) ])
 
-            for name, data in items.iteritems():
+            for name, data in items.items():
                 chart.append({"name": "%02s" % name, "data": data})
 
             if delta:
@@ -155,7 +155,7 @@ class KafkaHandler(RequestHandler):
         if method == "jstree":
             jstree = []
 
-            for cluster, metrics in instance.kafkaConfig.iteritems():
+            for cluster, metrics in instance.kafkaConfig.items():
                 parent = {
                     "text": cluster, 
                     "children": [], 
@@ -164,7 +164,7 @@ class KafkaHandler(RequestHandler):
                     }
                 }
 
-                topics = sorted(metrics["topic"].iteritems(), key=lambda x:x[0])
+                topics = sorted(metrics["topic"].items(), key=lambda x:x[0])
 
                 for topic, groups in topics:
                     children = {
@@ -198,7 +198,7 @@ class KafkaHandler(RequestHandler):
             topic = self.get_argument("topic", None)
             group = self.get_argument("group", None)
             
-            db = os.path.join(instance.kafkaDatadir, "kafka_{}.db".format(abs(hash(cluster))))
+            db = os.path.join(instance.kafkaDatadir, "kafka_{}.db".format(md5Name(cluster)))
 
             clusterConfig = instance.kafkaConfig[cluster]
             kafka = Kafka(clusterConfig['server'])

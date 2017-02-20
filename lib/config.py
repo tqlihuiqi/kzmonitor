@@ -3,7 +3,10 @@
 import os
 import yaml
 
-from ConfigParser import ConfigParser
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
 
 class ConfigInstance(object):
 

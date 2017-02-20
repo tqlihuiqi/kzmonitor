@@ -1,6 +1,12 @@
 # -*-coding:utf-8-*-
 
 import time
+from hashlib import md5
+
+def md5Name(name):
+    """ 传入字符串返回10位的md5值 """
+    
+    return md5(name.encode("utf8")).hexdigest()[:10]
 
 def timeColumn(timestamp):
     """ 

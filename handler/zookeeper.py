@@ -8,7 +8,7 @@ from tornado.web import RequestHandler
 
 from lib.client import SQLite3, Zookeeper
 from lib.config import instance
-from lib.util import selectColumn, toTimestamp
+from lib.util import selectColumn, toTimestamp, md5Name
 
 class ZookeeperHandler(RequestHandler):
 
@@ -17,7 +17,7 @@ class ZookeeperHandler(RequestHandler):
         """ 返回Hightchats数据 """
 
         column = selectColumn(end - start)
-        db = os.path.join(instance.zookeeperDatadir, "zookeeper_{}.db".format(abs(hash(cluster))))
+        db = os.path.join(instance.zookeeperDatadir, "zookeeper_{}.db".format(md5Name(cluster)))
 
         charts = []
 
@@ -60,7 +60,7 @@ class ZookeeperHandler(RequestHandler):
     
                         items[ip].append([ metric["timestamp"]*1000, int(metric[k]) ])
 
-                    for k, v in items.iteritems():
+                    for k, v in items.items():
                         chart.append({"name": k, "data": v})
 
                     charts.append(chart)
@@ -77,7 +77,7 @@ class ZookeeperHandler(RequestHandler):
         if method == "jstree":
             jstree = []
 
-            for cluster, nodes in instance.zookeeperConfig.iteritems():
+            for cluster, nodes in instance.zookeeperConfig.items():
                 parent = {
                     "text": cluster, 
                     "children": [], 
@@ -217,10 +217,13 @@ class ZookeeperHandler(RequestHandler):
                     path = self.get_argument("path")
                     data, stat = yield client.get(path)
 
-                    if type(data) == str:
-                        try:
-                            data = data.decode("utf8")
-                        except UnicodeDecodeError as err:
-                            data = "can not recognized"
+                    if not data:
+                        data = None
+
+                    elif type(data) == str:
+                        data = data.encode("utf8").decode("utf8")
+
+                    elif type(data) == bytes:
+                        data = data.decode("utf8")
 
                     self.write(json.dumps({"data": data, "stat": stat}))

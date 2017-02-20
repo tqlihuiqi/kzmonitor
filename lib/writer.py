@@ -5,9 +5,9 @@ import time
 
 from tornado.gen import coroutine
 
-from client import Kafka, Zookeeper, SQLite3
-from config import instance
-from util import timeColumn
+from .client import Kafka, Zookeeper, SQLite3
+from .config import instance
+from .util import timeColumn, md5Name
 
 class KafkaWriter(object):
 
@@ -20,17 +20,17 @@ class KafkaWriter(object):
         删除过期数据, 由参数kafka.data.expire.day控制
         """
 
-        for cluster, metrics in instance.kafkaConfig.iteritems():
+        for cluster, metrics in instance.kafkaConfig.items():
             kafka = Kafka(metrics["server"])
             
             if not os.path.exists(instance.kafkaDatadir):
                 raise IOError(instance.kafkaDatadir + ": No such file or directory.")
 
-            with SQLite3(os.path.join(instance.kafkaDatadir, "kafka_{}.db".format(abs(hash(cluster))))) as client:
+            with SQLite3(os.path.join(instance.kafkaDatadir, "kafka_{}.db".format(md5Name(cluster)))) as client:
                 # 整理数据文件碎片
                 yield client.vacuum()
             
-                for topic, groups in metrics["topic"].iteritems():
+                for topic, groups in metrics["topic"].items():
                     partitions = yield kafka.getPartition(topic)
                     # 创建表
                     yield client.createKafkaTable(topic, partitions)
@@ -47,7 +47,7 @@ class KafkaWriter(object):
                         offsets = yield kafka.getOffsets(topic, partitions, group)
                         lag = {p: logsize[p] - offsets[p] for p in partitions}
                     
-                        for category, metrics in dict(logsize=logsize, offsets=offsets, lag=lag).iteritems():
+                        for category, metrics in dict(logsize=logsize, offsets=offsets, lag=lag).items():
                             partitionValues = ", ".join(map(str,[ metrics.get(p) for p in partitions ]))
                             timestamp, timestamp5m, timestamp10m, timestamp1h = timeColumn(int(time.time()))
                             values.append("('{}', '{}', {}, {}, {}, {}, {})".format(group, category, partitionValues, timestamp, timestamp5m, timestamp10m, timestamp1h))
@@ -72,11 +72,11 @@ class ZookeeperWriter(object):
         删除过期数据, 由参数zookeeper.data.expire.day控制
         """
 
-        for cluster, metrics in instance.zookeeperConfig.iteritems():
+        for cluster, metrics in instance.zookeeperConfig.items():
             if not os.path.exists(instance.zookeeperDatadir):
                 raise IOError(instance.zookeeperDatadir + ": No such file or directory.")
 
-            with SQLite3(os.path.join(instance.zookeeperDatadir, "zookeeper_{}.db".format(abs(hash(cluster))))) as client:
+            with SQLite3(os.path.join(instance.zookeeperDatadir, "zookeeper_{}.db".format(md5Name(cluster)))) as client:
                 # 整理数据文件碎片
                 yield client.vacuum()
                 # 创建表
