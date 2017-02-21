@@ -26,26 +26,41 @@ class KafkaWriter(object):
             if not os.path.exists(instance.kafkaDatadir):
                 raise IOError(instance.kafkaDatadir + ": No such file or directory.")
 
+            if not instance.kafkaCache.get(cluster):
+                instance.kafkaCache[cluster] = {}
+
             with SQLite3(os.path.join(instance.kafkaDatadir, "kafka_{}.db".format(md5Name(cluster)))) as client:
                 # 整理数据文件碎片
                 yield client.vacuum()
             
                 for topic, groups in metrics["topic"].items():
                     partitions = yield kafka.getPartition(topic)
+
                     # 创建表
                     yield client.createKafkaTable(topic, partitions)
+
+                    if not instance.kafkaCache[cluster].get(topic):
+                        instance.kafkaCache[cluster][topic] = {"logsize": None, "group": {}}
     
+                    logsize = yield kafka.getLogsize(topic, partitions)
+                    instance.kafkaCache[cluster][topic]["logsize"] = logsize
+
                     sql = """
                         INSERT INTO `{}` (group_name, category, {}, timestamp, timestamp5m, timestamp10m, timestamp1h)
                         VALUES %s
                     """.format(topic, ",".join([ "p{}".format(p) for p in partitions ]))
-                    
-                    logsize = yield kafka.getLogsize(topic, partitions)
+
                     values = []
                     
                     for group in groups:
                         offsets = yield kafka.getOffsets(topic, partitions, group)
                         lag = {p: logsize[p] - offsets[p] for p in partitions}
+
+                        if not instance.kafkaCache[cluster][topic]["group"].get(group):
+                            instance.kafkaCache[cluster][topic]["group"][group] = {"offsets": None, "lag": None}
+
+                        instance.kafkaCache[cluster][topic]["group"][group]["offsets"] = offsets
+                        instance.kafkaCache[cluster][topic]["group"][group]["lag"] = lag
                     
                         for category, metrics in dict(logsize=logsize, offsets=offsets, lag=lag).items():
                             partitionValues = ", ".join(map(str,[ metrics.get(p) for p in partitions ]))
@@ -76,6 +91,9 @@ class ZookeeperWriter(object):
             if not os.path.exists(instance.zookeeperDatadir):
                 raise IOError(instance.zookeeperDatadir + ": No such file or directory.")
 
+            if not instance.zookeeperCache.get(cluster):
+                instance.zookeeperCache[cluster] = {}
+
             with SQLite3(os.path.join(instance.zookeeperDatadir, "zookeeper_{}.db".format(md5Name(cluster)))) as client:
                 # 整理数据文件碎片
                 yield client.vacuum()
@@ -83,8 +101,12 @@ class ZookeeperWriter(object):
                 yield client.createZkTable("zkstatus")
 
                 for ip in metrics["server"]:
+                    if not instance.zookeeperCache[cluster].get(ip):
+                        instance.zookeeperCache[cluster][ip] = None
+
                     with Zookeeper(ip) as zk:
                         mntr = yield zk.fetchMntr()
+                        instance.zookeeperCache[cluster][ip] = mntr
                         timestamp, timestamp5m, timestamp10m, timestamp1h = timeColumn(int(time.time()))
 
                         sql = """

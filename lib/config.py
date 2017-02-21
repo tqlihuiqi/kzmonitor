@@ -16,6 +16,10 @@ class ConfigInstance(object):
         self.cf = ConfigParser()
         self.cf.read(os.path.join(self.basedir, "etc/server.conf"))
 
+        # 缓存
+        self.kafkaCache = dict()
+        self.zookeeperCache = dict()
+
         # 配置文件项
         self.kafkaPeriod = self.cf.getint("server", "kafka.fetch.period.ms")
         self.kafkaDataExpire = self.cf.getint("server", "kafka.data.expire.day")
