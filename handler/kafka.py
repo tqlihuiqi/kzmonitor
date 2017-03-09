@@ -13,13 +13,15 @@ from lib.util import selectColumn, toTimestamp, md5Name
 class KafkaHandler(RequestHandler):
 
     @coroutine
-    def getTables(self, db):
+    def getTables(self, db, cluster):
         """ 返回指定数据库的所有表 """
+
+        aliveTopics = instance.kafkaConfig[cluster]["topic"]
 
         with SQLite3(db) as client:
             tables = yield client.read("SELECT name FROM sqlite_master WHERE type='table'")
 
-        raise Return([t[0] for t in tables if 'sqlite' not in t[0]])
+        raise Return([t[0] for t in tables if t[0] in aliveTopics])
 
     @coroutine
     def flowCounter(self, db, table, partitions, category, group=None):
@@ -210,7 +212,7 @@ class KafkaHandler(RequestHandler):
     
                 if not topic:
                     # 统计kafka集群消息流入流出
-                    tables = yield self.getTables(db)
+                    tables = yield self.getTables(db, cluster)
 
                     for table in tables:
                         partitions = yield kafka.getPartition(table)
@@ -264,7 +266,7 @@ class KafkaHandler(RequestHandler):
                 # 获取指定Kafka集群下TopicLogsize排名
     
                 topicList = []
-                tables = yield self.getTables(db)
+                tables = yield self.getTables(db, cluster)
         
                 for table in tables:
                     partitions = yield kafka.getPartition(table)
