@@ -122,7 +122,7 @@ class KafkaHandler(RequestHandler):
                         if not items.get(k):
                             items[k] = []
                         
-                        items[k].append([ metric["timestamp"] * 1000, int(v) ])
+                        items[k].append([ metric["timestamp"] * 1000, (v >= 0 and [v] or [0])[0] ])
 
             for name, data in items.items():
                 chart.append({"name": "%02s" % name, "data": data})
