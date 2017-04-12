@@ -62,10 +62,16 @@ curl "http://127.0.0.1:8080/api/v1/zookeeper?cluster=myCluster&server=10.0.0.1"
 
 ## Run in Docker
 
-### Build
+### Build or pull
 
 ```
 $ docker build -t kzmonitor .
+```
+
+Or
+
+```
+$ docker pull liubin/kzmonitor
 ```
 
 ### Edit Config files
@@ -87,8 +93,18 @@ $ vi tmp/etc/zookeeper.yaml
 
 ```
 $ mkdir -p tmp/data/{kafka,zookeeper}
-$ docker run -d --name kzmonitor --net host -v `pwd`/tmp/etc:/kzmonitor/etc -v `pwd`/tmp/data:/kzmonitor/data kzmonitor
+$ docker run -p 8088:80 \
+    -v `pwd`/tmp/etc:/kzmonitor/etc \
+    -v `pwd`/tmp/data:/kzmonitor/data \
+    -e PORT=8088 \
+    -e USER=aster \
+    -e PASS=abcde \
+    kzmonitor
 $ docker logs -f kzmonitor
 ```
 
+Envs for basic auth:
 
+- `PORT`: If changed in `etc/server.conf`, default is `8080`;
+- `USER`: User for basic auth, default `admin`;
+- `PASS`: Password for basic auth, default `567`
