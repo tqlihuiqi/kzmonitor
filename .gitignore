@@ -7,3 +7,6 @@
 *.tgz
 *.bz2
 *.db
+.idea
+kzmonitor.iml
+tmp
