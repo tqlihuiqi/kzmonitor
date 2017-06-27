@@ -97,49 +97,45 @@
     };
 
     function kafkaChart(datepicker, cluster, topic, group) {
-
-        $(function () {
-            var start = moment().subtract(30, "m").startOf("s");
-            var end = moment().startOf("s");
+        var start = moment().subtract(30, "m").startOf("s");
+        var end = moment().startOf("s");
     
-            function timeRangeData(start, end) {
-                $("#logsize").html(loading);
-                $("#logsizeDelta").html(loading);
-                $("#offsets").html(loading);
-                $("#offsetsDelta").html(loading);
-                $("#lag").html(loading);
+        function timeRangeData(start, end) {
+            $("#logsize").html(loading);
+            $("#logsizeDelta").html(loading);
+            $("#offsets").html(loading);
+            $("#offsetsDelta").html(loading);
+            $("#lag").html(loading);
 
-                $.ajax({
-                    url: "/kafka",
-                    type: "POST",
-                    data: {
-                        "method": "chartList",
-                        "cluster": cluster,
-                        "topic": topic,
-                        "group": group,
-                        "start": start.format("YYYY-MM-DD HH:mm:ss"),
-                        "end": end.format("YYYY-MM-DD HH:mm:ss")
-                    },
-                    dataType: "json",
-                    success: function (event) {
-                        makeChart("logsize", "Logsize", event.logsize);
-                        makeChart("logsizeDelta", "Logsize 增量", event.logsizeDelta);
-                        makeChart("offsets", "Offsets", event.offsets);
-                        makeChart("offsetsDelta", "Offsets 增量", event.offsetsDelta);
-                        makeChart("lag", "Lag", event.lag);
-                    },
-                    error: function(jqXHR, stat, err_msg) {
-                        alert("Error found: " + err_msg);
-                    }
-                });
-            };
+            $.ajax({
+                url: "/kafka",
+                type: "POST",
+                data: {
+                    "method": "chartList",
+                    "cluster": cluster,
+                    "topic": topic,
+                    "group": group,
+                    "start": start.format("YYYY-MM-DD HH:mm:ss"),
+                    "end": end.format("YYYY-MM-DD HH:mm:ss")
+                },
+                dataType: "json",
+                success: function (event) {
+                    makeChart("logsize", "Logsize", event.logsize);
+                    makeChart("logsizeDelta", "Logsize 增量", event.logsizeDelta);
+                    makeChart("offsets", "Offsets", event.offsets);
+                    makeChart("offsetsDelta", "Offsets 增量", event.offsetsDelta);
+                    makeChart("lag", "Lag", event.lag);
+                },
+                error: function(jqXHR, stat, err_msg) {
+                    alert("Error found: " + err_msg);
+                }
+            });
+        };
 
-            timeRangeData(start, end);
+        timeRangeData(start, end);
 
-            // 时间范围选择器
-            daterange(datepicker, timeRangeData);
-
-        });
+        // 时间范围选择器
+        daterange(datepicker, timeRangeData);
     }
 
     function kafkaClusterStat(cluster) {
