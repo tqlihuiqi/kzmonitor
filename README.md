@@ -9,12 +9,30 @@
 - 实时获取指定Group的Logsize Offsets Lag
 - 可定制的历史数据存储时间
 
+![performance](images/kafka01.png)
+
+
+
+![performance](images/kafka02.png)
+
+
+
+![performance](images/kafka03.png)
+
 ### Zookeeper
 
 - 集群各个节点性能数据
 - 单个Server性能数据与该Server的当前活跃客户端
 - 展示指定znode数据(zookeeper get操作)
 - 可定制的历史数据存储时间
+
+![performance](images/zk01.png)
+
+
+
+![performance](images/zk02.png)
+
+![performance](images/zk03.png)
 
 ## Api
 
